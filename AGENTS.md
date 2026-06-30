@@ -6,6 +6,8 @@ This document defines the operating rules for all AI agents contributing to Drum
 
 All agents must read this file before making changes to the repository.
 
+Human contributors should start with `README.md`. AI agents should start here and use `README.md` for project orientation.
+
 ## 1. Project Goal
 
 Drum Family OS is a platform for organizing, operating, and scaling the Drum Family ecosystem. The project is intended to become the central digital operating system for community management, education, events, content, business processes, and future product modules related to Drum Family.
