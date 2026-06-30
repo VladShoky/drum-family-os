@@ -1,0 +1,799 @@
+openapi: 3.0.3
+info:
+  title: Drum Family OS Lead Center API
+  version: 0.1.0-draft
+  description: >
+    Draft HTTP API contract for the Lead Center module. This is not an
+    implementation and does not imply any framework, controller, database, or
+    runtime choice.
+servers:
+  - url: /api/v1/lead-center
+    description: Draft modular-monolith API base path
+tags:
+  - name: Leads
+  - name: Activities
+  - name: Trial Requests
+  - name: Pipeline
+paths:
+  /leads:
+    post:
+      tags:
+        - Leads
+      summary: Create lead
+      operationId: createLead
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadRequest"
+      responses:
+        "201":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    get:
+      tags:
+        - Leads
+      summary: Search leads
+      operationId: searchLeads
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/LeadStatus"
+        - name: branchId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: assignedUserId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: sourceType
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lead search result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadListResponse"
+  /leads/{leadId}:
+    get:
+      tags:
+        - Leads
+      summary: Get lead by id
+      operationId: getLead
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Lead details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - Leads
+      summary: Update lead profile
+      operationId: updateLead
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLeadRequest"
+      responses:
+        "200":
+          description: Lead updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /leads/{leadId}/status:
+    post:
+      tags:
+        - Leads
+      summary: Change lead status
+      operationId: changeLeadStatus
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeLeadStatusRequest"
+      responses:
+        "200":
+          description: Status changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /leads/{leadId}/assignments:
+    post:
+      tags:
+        - Leads
+      summary: Assign lead
+      operationId: assignLead
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignLeadRequest"
+      responses:
+        "201":
+          description: Lead assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadAssignment"
+  /leads/{leadId}/activities:
+    post:
+      tags:
+        - Activities
+      summary: Add lead activity
+      operationId: addLeadActivity
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddLeadActivityRequest"
+      responses:
+        "201":
+          description: Activity added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadActivity"
+  /leads/{leadId}/timeline:
+    get:
+      tags:
+        - Activities
+      summary: Get lead timeline
+      operationId: getLeadTimeline
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+      responses:
+        "200":
+          description: Lead timeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadTimelineResponse"
+  /leads/{leadId}/trial-requests:
+    post:
+      tags:
+        - Trial Requests
+      summary: Request trial lesson
+      operationId: requestTrialLesson
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTrialRequest"
+      responses:
+        "201":
+          description: Trial request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrialRequest"
+  /trial-requests/{trialRequestId}:
+    patch:
+      tags:
+        - Trial Requests
+      summary: Update trial request
+      operationId: updateTrialRequest
+      parameters:
+        - name: trialRequestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTrialRequest"
+      responses:
+        "200":
+          description: Trial request updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrialRequest"
+  /leads/{leadId}/convert:
+    post:
+      tags:
+        - Leads
+      summary: Convert lead to student handoff
+      operationId: convertLead
+      parameters:
+        - $ref: "#/components/parameters/LeadId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConvertLeadRequest"
+      responses:
+        "200":
+          description: Lead converted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /pipeline:
+    get:
+      tags:
+        - Pipeline
+      summary: Get pipeline summary
+      operationId: getLeadPipeline
+      parameters:
+        - name: branchId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Pipeline summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineSummary"
+components:
+  parameters:
+    LeadId:
+      name: leadId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflict or invalid lifecycle transition
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    LeadStatus:
+      type: string
+      enum:
+        - captured
+        - contacted
+        - qualified
+        - trial_requested
+        - trial_scheduled
+        - trial_completed
+        - converted
+        - lost
+        - duplicate
+        - archived
+    Lead:
+      type: object
+      required:
+        - id
+        - organizationId
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        branchId:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          $ref: "#/components/schemas/LeadSource"
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        qualificationStatus:
+          type: string
+          nullable: true
+        personName:
+          type: string
+          nullable: true
+        preferredInstrument:
+          type: string
+          nullable: true
+        ageGroup:
+          type: string
+          nullable: true
+        assignedUserId:
+          type: string
+          format: uuid
+          nullable: true
+        convertedStudentId:
+          type: string
+          format: uuid
+          nullable: true
+        lossReason:
+          type: string
+          nullable: true
+        duplicateOfLeadId:
+          type: string
+          format: uuid
+          nullable: true
+        contacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadContact"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LeadSource:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        type:
+          type: string
+    LeadContact:
+      type: object
+      required:
+        - id
+        - type
+        - value
+        - isPrimary
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - phone
+            - email
+            - telegram
+            - social
+            - other
+        value:
+          type: string
+        isPrimary:
+          type: boolean
+        consentStatus:
+          type: string
+          nullable: true
+    CreateLeadRequest:
+      type: object
+      required:
+        - organizationId
+        - contacts
+      properties:
+        organizationId:
+          type: string
+          format: uuid
+        branchId:
+          type: string
+          format: uuid
+          nullable: true
+        source:
+          $ref: "#/components/schemas/LeadSource"
+        personName:
+          type: string
+          nullable: true
+        preferredInstrument:
+          type: string
+          nullable: true
+        ageGroup:
+          type: string
+          nullable: true
+        contacts:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CreateLeadContact"
+    CreateLeadContact:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - phone
+            - email
+            - telegram
+            - social
+            - other
+        value:
+          type: string
+        isPrimary:
+          type: boolean
+          default: false
+        consentStatus:
+          type: string
+          nullable: true
+    UpdateLeadRequest:
+      type: object
+      properties:
+        branchId:
+          type: string
+          format: uuid
+          nullable: true
+        personName:
+          type: string
+          nullable: true
+        preferredInstrument:
+          type: string
+          nullable: true
+        ageGroup:
+          type: string
+          nullable: true
+        qualificationStatus:
+          type: string
+          nullable: true
+    ChangeLeadStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        reason:
+          type: string
+          nullable: true
+        duplicateOfLeadId:
+          type: string
+          format: uuid
+          nullable: true
+    AssignLeadRequest:
+      type: object
+      required:
+        - assignedToUserId
+      properties:
+        assignedToUserId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          nullable: true
+    LeadAssignment:
+      type: object
+      required:
+        - id
+        - leadId
+        - assignedToUserId
+        - assignedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        leadId:
+          type: string
+          format: uuid
+        assignedToUserId:
+          type: string
+          format: uuid
+        assignedByUserId:
+          type: string
+          format: uuid
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        assignedAt:
+          type: string
+          format: date-time
+    AddLeadActivityRequest:
+      type: object
+      required:
+        - type
+        - summary
+      properties:
+        type:
+          type: string
+        channel:
+          type: string
+          nullable: true
+        summary:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+    LeadActivity:
+      type: object
+      required:
+        - id
+        - leadId
+        - type
+        - summary
+        - occurredAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        leadId:
+          type: string
+          format: uuid
+        actorUserId:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+        channel:
+          type: string
+          nullable: true
+        summary:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+    CreateTrialRequest:
+      type: object
+      properties:
+        branchId:
+          type: string
+          format: uuid
+          nullable: true
+        teacherId:
+          type: string
+          format: uuid
+          nullable: true
+        preferredTimeWindow:
+          type: string
+          nullable: true
+    UpdateTrialRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - requested
+            - scheduled
+            - completed
+            - cancelled
+            - no_show
+        teacherId:
+          type: string
+          format: uuid
+          nullable: true
+        scheduleSlotId:
+          type: string
+          format: uuid
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+    TrialRequest:
+      type: object
+      required:
+        - id
+        - leadId
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        leadId:
+          type: string
+          format: uuid
+        branchId:
+          type: string
+          format: uuid
+          nullable: true
+        teacherId:
+          type: string
+          format: uuid
+          nullable: true
+        scheduleSlotId:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+        preferredTimeWindow:
+          type: string
+          nullable: true
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ConvertLeadRequest:
+      type: object
+      properties:
+        convertedStudentId:
+          type: string
+          format: uuid
+          nullable: true
+        conversionNote:
+          type: string
+          nullable: true
+    LeadListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Lead"
+        nextCursor:
+          type: string
+          nullable: true
+    LeadTimelineResponse:
+      type: object
+      required:
+        - leadId
+        - activities
+      properties:
+        leadId:
+          type: string
+          format: uuid
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadActivity"
+    PipelineSummary:
+      type: object
+      required:
+        - activeLeadCount
+        - byStatus
+      properties:
+        activeLeadCount:
+          type: integer
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        conversionRate:
+          type: number
+          format: float
+          nullable: true
+        averageFirstResponseMinutes:
+          type: number
+          format: float
+          nullable: true
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
